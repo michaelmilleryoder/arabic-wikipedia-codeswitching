@@ -18,21 +18,22 @@ Input:
 
 Output:
 * CSV with all article edits scored (edscores_path)
-* CSV with all talk page contributions in a conversation for an editor, 1 per line, scored
+* CSV with all talk page contributions in a conversation for an editor, 1 per 
+line, scored
 
 """
 
 """ I/O vars """
 # input
-n = 10000
-infile = '/home/michael/school/research/wp/ar/artalk_{:d}.csv'.format(n)
-talkpath = '/home/michael/school/research/wp/ar/artalk.tsv'
+#n = 10000 # how many random contributions to include
+infile = '/home/michael/school/research/wp/ar/artalk_cspages_segmented.csv'
+#talkpath = '/home/michael/school/research/wp/ar/artalk.tsv'
 diff_dir = '/home/michael/school/research/wp/ar/ar_article_diffs/'
 
 # output
 #rv_outpath = '/home/michael/school/research/wp/ar/revert_discussion.csv'
 edscores_path = '/home/michael/school/research/wp/ar/editor_thread_scores.csv'
-outpath = '/home/michael/school/research/wp/ar/discussion_features_{:d}.csv'.format(n)
+outpath = '/home/michael/school/research/wp/ar/cs_talk_scores.csv'
 
 
 """ Check for conversations with reverts """
@@ -116,41 +117,41 @@ def check_reverts():
     cs_revert_talk.to_csv(rv_outpath, index=None)
     print('Wrote revert info')
 
+def dict_diff(orig, chg):
+    """ Calculates diff between dictionary a and b based on keys from dict a
+        Returns: (edit_score, #tokens changed in edit)
+    """
+    
+    if len(orig) == 0: # no change in original except for stopwords
+        return (1.0, 0)
+    
+    chg_abs_sum = 0 # relevant word changes
+    orig_abs_sum = 0
+    for k in orig:
+        orig_abs_sum += abs(orig[k])
+        if orig[k] * chg[k] <= 0: # signs differ
+            chg_abs_sum += abs(chg[k])
+            
+    if orig_abs_sum == 0: 
+        if chg_abs_sum == 0: # no sign difference, so revert successful
+            return 1.0, abs(sum(orig.values()))
+        else:
+            debug_here()
+            
+    return max(1-chg_abs_sum/orig_abs_sum, 0.0), orig_abs_sum
 
 def score_editors():
-    """ Score editors """
+    """ Score editors
+        Print out article edit file with score for each edit 
+    """
 
     # Load, initialize data
-    talk = pd.read_csv(rv_outpath, parse_dates=['timestamp'])
+    talk = pd.read_csv(infile, parse_dates=['timestamp'])
     assert os.path.exists(diff_dir)
     thread_durs = []
 
-    # FNS FOR SCORING EDITORS IN REVERT DISCUSSIONS
-    def dict_diff(orig, chg):
-        """ Calculates diff between dictionary a and b based on keys from dict a
-            Returns: (edit_score, #tokens changed in edit)
-        """
-        
-        if len(orig) == 0: # no change in original except for stopwords
-            return (1.0, 0)
-        
-        chg_abs_sum = 0 # relevant word changes
-        orig_abs_sum = 0
-        for k in orig:
-            orig_abs_sum += abs(orig[k])
-            if orig[k] * chg[k] <= 0: # signs differ
-                chg_abs_sum += abs(chg[k])
-                
-        if orig_abs_sum == 0: 
-            if chg_abs_sum == 0: # no sign difference, so revert successful
-                return 1.0, abs(sum(orig.values()))
-            else:
-                debug_here()
-                
-        return max(1-chg_abs_sum/orig_abs_sum, 0.0), orig_abs_sum
-
     # SCORE THREAD-WISE WINNERS FOR EACH DISCUSSION AND EDIT PARTICIPANT
-    art_data = pd.DataFrame() # Final spreadsheet with scores, will be organized by article edit keys
+    art_data = pd.DataFrame() # Final article edit spreadsheet with scores, will be organized by article edit keys
     art_data['edit_timestamp'] = pd.Series()
     art_data['edit_score'] = pd.Series()
     art_data['editor_thread_score'] = pd.Series()
@@ -166,13 +167,12 @@ def score_editors():
     # Get edits by thread editors in between initial revert and session end
     # session end: end of thread or last revert 7 days after last thread entry by thread participants
     art_data = pd.DataFrame()
-    # for i, (art, thread) in enumerate(threads[:20]):
     for i, (art, thread) in enumerate(threads):
         
         if i % 5 == 0:
             print(i)
         
-        # Talk page participants--all of them with the corresponding thread in revert data
+        # Talk page participants
         talk_parts = set(talk[(talk['article_title']==art) & (talk['thread_title']==thread)]['username'].values)
         
         talk_rows = talk[(talk['article_title'] == art) 
@@ -206,7 +206,9 @@ def score_editors():
         # Calculate success score for each edit compared with end revision
         for row in sess_edits.itertuples():
             edit_text = diff_data.loc[diff_data['timestamp']==row.timestamp]
-            diffs = diff_data.loc[(diff_data['timestamp'] > row.timestamp) & (diff_data['timestamp'] <= (sess_end + DateOffset(days=1)))]
+            diffs = diff_data.loc[(diff_data['timestamp'] > row.timestamp) & 
+                (diff_data['timestamp'] <= (sess_end + DateOffset(days=1)))] 
+                # includes edits by non-talk participants, as should
             
             # Unigram counter for edit
             if (len(edit_text['deletions'].values) > 0) and (isinstance(edit_text['deletions'].values[0], str)):
@@ -324,7 +326,6 @@ def build_out():
     print('Wrote thread info with editor scores to {:s}'.format(outpath))
 
 def main():
-    check_reverts()
     score_editors()
     build_out()
 
