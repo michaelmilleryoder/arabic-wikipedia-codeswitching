@@ -6,31 +6,23 @@ import nltk
 from collections import Counter, defaultdict
 import re, hashlib, os
 from pandas.tseries.offsets import *
+#from sklearn.metrics import cohen_kappa_score, make_scorer
+#from sklearn import cross_validation, svm
+#from sklearn.linear_model import LinearRegression, LogisticRegression
+#from sklearn.feature_extraction.text import CountVectorizer
+#from sklearn.model_selection import train_test_split, LeaveOneOut
+#from scipy.stats import ttest_rel, ttest_ind, pearsonr
+#from scipy.sparse import hstack
 import numpy as np
 import math
+#endict = set(words.words())
 
-""" This script scores editors based on the proportion of edits that last
-after a discussion ends
-
-Input:
-* CSV with talk page contributions, 1 per line
-* Directory with article revision histories TSV files, 1 per row
-
-Output:
-* CSV with all article edits scored (edscores_path)
-* CSV with all talk page contributions in a conversation for an editor, 1 per line, scored
-
-"""
 
 """ I/O vars """
-# input
 n = 10000
 infile = '/home/michael/school/research/wp/ar/artalk_{:d}.csv'.format(n)
 talkpath = '/home/michael/school/research/wp/ar/artalk.tsv'
-diff_dir = '/home/michael/school/research/wp/ar/ar_article_diffs/'
-
-# output
-#rv_outpath = '/home/michael/school/research/wp/ar/revert_discussion.csv'
+rv_outpath = '/home/michael/school/research/wp/ar/revert_discussion.csv'
 edscores_path = '/home/michael/school/research/wp/ar/editor_thread_scores.csv'
 outpath = '/home/michael/school/research/wp/ar/discussion_features_{:d}.csv'.format(n)
 
@@ -122,6 +114,7 @@ def score_editors():
 
     # Load, initialize data
     talk = pd.read_csv(rv_outpath, parse_dates=['timestamp'])
+    diff_dir = '/home/michael/school/research/wp/ar/ar_article_diffs/'
     assert os.path.exists(diff_dir)
     thread_durs = []
 
