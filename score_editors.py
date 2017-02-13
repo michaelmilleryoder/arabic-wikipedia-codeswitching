@@ -8,6 +8,8 @@ import re, hashlib, os
 from pandas.tseries.offsets import *
 import numpy as np
 import math
+from tqdm import tqdm
+import pdb
 
 """ This script scores editors based on the proportion of edits that last
 after a discussion ends
@@ -117,6 +119,8 @@ def check_reverts():
     cs_revert_talk.to_csv(rv_outpath, index=None)
     print('Wrote revert info')
 
+
+
 def dict_diff(orig, chg):
     """ Calculates diff between dictionary a and b based on keys from dict a
         Returns: (edit_score, #tokens changed in edit)
@@ -136,7 +140,7 @@ def dict_diff(orig, chg):
         if chg_abs_sum == 0: # no sign difference, so revert successful
             return 1.0, abs(sum(orig.values()))
         else:
-            debug_here()
+            pdb.set_trace()
             
     return max(1-chg_abs_sum/orig_abs_sum, 0.0), orig_abs_sum
 
@@ -144,6 +148,8 @@ def score_editors():
     """ Score editors
         Print out article edit file with score for each edit 
     """
+
+    print("Scoring editors ...")
 
     # Load, initialize data
     talk = pd.read_csv(infile, parse_dates=['timestamp'])
@@ -167,10 +173,10 @@ def score_editors():
     # Get edits by thread editors in between initial revert and session end
     # session end: end of thread or last revert 7 days after last thread entry by thread participants
     art_data = pd.DataFrame()
-    for i, (art, thread) in enumerate(threads):
-        
-        if i % 5 == 0:
-            print(i)
+
+    no_article_ctr = 0
+    #for i, (art, thread) in enumerate(threads):
+    for i, (art, thread) in enumerate(tqdm(threads)):
         
         # Talk page participants
         talk_parts = set(talk[(talk['article_title']==art) & (talk['thread_title']==thread)]['username'].values)
@@ -185,7 +191,9 @@ def score_editors():
         if prev_art != art:
             artfp = os.path.join(diff_dir, art.replace(' ', '_').replace('/', '_') + '_diff.csv')
             if not os.path.exists(artfp):
-                debug_here()
+                no_article_ctr += 1
+                tqdm.write("{:d} No article".format(no_article_ctr))
+                continue
             diff_data = pd.read_csv(artfp, parse_dates=['timestamp'])
         sess_beg = thread_beg - DateOffset(days=1)
         sess_end = thread_end + DateOffset(days=1)
@@ -196,7 +204,7 @@ def score_editors():
         sess_parts = set(sess_edits['editor'].tolist())
         
         if sess_edits.empty:
-            print('No diffs')
+            #print('No diffs')
             continue
         sess_beg = min(sess_edits['timestamp'])
         sess_end = max(sess_edits['timestamp'])
