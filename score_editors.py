@@ -252,7 +252,7 @@ def score_editors():
                 edscores[row.editor][0] += edit_score * n_wds
                 edscores[row.editor][1] += n_wds
 
-            new_row = pd.DataFrame([row])
+            new_row = pd.DataFrame([row]) # SLOW, OPTIMIZE
             new_row['edit_score'] = edit_score
     #             new_row['winner'] = winner
             new_row['thread_title'] = thread
@@ -299,7 +299,8 @@ def score_editors():
 def build_out():
     """ Assemble editor scores with talk page discussion """
     art_data = pd.read_csv(edscores_path)
-    talk = pd.read_csv(talkpath, delimiter='\t')
+    #talk = pd.read_csv(talkpath, delimiter='\t')
+    talk = pd.read_csv(infile, parse_dates=['timestamp'])
 
     # Build input corpora of editors' text + others' text, get labels
     edthreads = sorted(set((zip(art_data['article'], art_data['thread_title'], art_data['editor'], art_data['editor_thread_score']))))
@@ -311,7 +312,8 @@ def build_out():
     n_otherturns = {}
     othertalk = defaultdict(str)
 
-    for i, el in enumerate(edthreads):
+    print("Assembling editor and other text ...")
+    for i, el in enumerate(tqdm(edthreads)):
         rows = talk[(talk['article_title']==el[0]) &
                         (talk['thread_title']==el[1])]
         edrows = rows[rows['username']==el[2]]
@@ -323,6 +325,7 @@ def build_out():
         n_otherturns[el] = len(other_rows)
         
     # Build one relevant dataframe
+    #print("Assembling dataframe ...")
     outrows = []
     for i, el in enumerate(edthreads):
         outrows.append([el[0], el[1], el[2], edtalk[el], othertalk[el], n_edturns[el], n_otherturns[el],
