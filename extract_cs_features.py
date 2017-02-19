@@ -93,8 +93,9 @@ def extract_technical():
     feats['other_en_technical'] = other_crit
 
 def extract_quotes():
-    ed_crit = [a and b for a,b in zip(feats['editor_talk'].map(two_quotes), feats['en_cs'].tolist())]
-    other_crit = [a and b for a,b in zip(feats['other_talk'].map(two_quotes), feats['other_en_cs'].tolist())]
+    """ Two quote marks and presence of Latin words """
+    ed_crit = [a and b for a,b in zip(feats['editor_talk'].map(two_quotes), feats['latin_cs'].tolist())]
+    other_crit = [a and b for a,b in zip(feats['other_talk'].map(two_quotes), feats['other_latin_cs'].tolist())]
 
     feats['editor_two_quotes'] = ed_crit
     feats['other_two_quotes'] = other_crit
@@ -145,9 +146,12 @@ def main():
 
     #extract_has_english()
     #extract_prop_english()
+    print("Extracting Latin features...")
     extract_has_latin()
     extract_prop_latin()
-    extract_prop_switches()
+    extract_prop_latin_switches()
+
+    print("Extracting quote features...")
     extract_quotes()
     #extract_technical()
     get_editor_success()
