@@ -9,10 +9,10 @@ import numpy as np
 import math
 
 """ I/O definitions """
-featfile = sys.argv[1] # input file
+featfile = sys.argv[1] # input file, ar/cs_talk_filtered.csv
 feats = pd.read_csv(featfile)
 
-outfile = sys.argv[2]
+outfile = sys.argv[2] # cs_talk_features.csv
 
 """ utility fns """
 # TODO: Make more meaningful
@@ -125,12 +125,12 @@ def extract_has_english():
 
 def extract_has_latin():
     # Posts with code-switching
-    crit = feats['editor_talk'].map(has_latin)
-    feats['latin_cs'] = crit
-    crit = feats['other_talk'].map(has_latin)
-    feats['other_latin_cs'] = crit
-    print("Number of posts with Latin: {0} / {1}".format(sum(crit), len(feats)))
-    print("Number of other posts with Latin: {0} / {1}".format(sum(crit), len(feats)))
+    feats['latin_cs'] = feats['editor_talk'].map(has_latin)
+    feats['other_latin_cs'] = feats['other_talk'].map(has_latin)
+    print("Number of posts with Latin: {0} / {1}".format(
+            sum(feats['latin_cs']), len(feats)))
+    print("Number of other posts with Latin: {0} / {1}".format(
+            sum(feats['other_latin_cs']), len(feats)))
 
 def extract_prop_latin():
     crit = feats['editor_talk'].map(prop_latin)
