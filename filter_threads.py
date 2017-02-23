@@ -13,7 +13,7 @@ import sys
 
 """ Functions """
 
-def filter(threshold, cstalk_path, base_outpath):
+def filter(cstalk_path, base_outpath, threshold=None):
     # ## Filter out conversations where everyone wins or only 1 editor present
 
     data = pd.read_csv(cstalk_path)

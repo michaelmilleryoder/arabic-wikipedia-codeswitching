@@ -16,11 +16,9 @@ import math
 import sys
 
 
-# Load features
-feats = pd.read_csv(featfile)
 
 """ Dataset stats """
-def stats():
+def stats(feats):
 
     print("Number of posts with Latin: {0} / {1}".format(sum(feats['latin_cs']), len(feats)))
     #print("Number of posts with English: {0} / {1}".format(sum(feats['en_cs']), len(feats)))
@@ -33,7 +31,7 @@ def stats():
     print()
 
 """ Correlation and t-test """
-def evaluate():
+def evaluate(feats):
 
     print("STATISTICAL ANALYSIS:")
 
@@ -66,7 +64,7 @@ def evaluate():
 
 
 """ Prediction """
-def prediction():
+def prediction(feats):
 
     print("CLASSIFYING")
 
@@ -145,9 +143,12 @@ def baseline():
 def main():
     featfile = sys.argv[1] # input file
     
-    stats()
-    evaluate()
-    prediction()
+    # Load features
+    feats = pd.read_csv(featfile)
+
+    stats(feats)
+    evaluate(feats)
+    prediction(feats)
 
 if __name__ == '__main__':
     main()
