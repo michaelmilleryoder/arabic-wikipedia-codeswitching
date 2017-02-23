@@ -8,11 +8,6 @@ import re, hashlib, os, sys
 import numpy as np
 import math
 
-""" I/O definitions """
-featfile = sys.argv[1] # input file, ar/cs_talk_filtered.csv
-feats = pd.read_csv(featfile)
-
-outfile = sys.argv[2] # cs_talk_features.csv
 
 """ utility fns """
 # TODO: Make more meaningful
@@ -141,11 +136,10 @@ def extract_prop_latin():
 def get_editor_success():
     feats['editor_success'] = feats['editor_score'].map(lambda x: x > 0.5)
 
+def extract_features(featfile, outfile):
+    """ Main extraction function """
 
-def main():
-
-    #extract_has_english()
-    #extract_prop_english()
+    feats = pd.read_csv(featfile)
     print("Extracting Latin features...")
     extract_has_latin()
     extract_prop_latin()
@@ -157,6 +151,18 @@ def main():
     get_editor_success()
     feats.to_csv(outfile, index=False)
     print("Wrote features to {0}".format(outfile))
+
+
+def main():
+    """ For use with command-line """
+
+    """ I/O definitions """
+    featfile = sys.argv[1] # input file, ar/cs_talk_filtered.csv
+    outfile = sys.argv[2] # cs_talk_features.csv
+
+    #extract_has_english()
+    #extract_prop_english()
+    extract_features(featfile, outfile)
 
 if __name__ == '__main__':
     main()

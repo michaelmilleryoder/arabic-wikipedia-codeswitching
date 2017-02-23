@@ -1,8 +1,6 @@
 import pandas as pd
 import csv
 from string import ascii_letters
-from nltk.corpus import words, stopwords
-import nltk
 from collections import Counter, defaultdict
 import re, hashlib, os
 from pandas.tseries.offsets import *
@@ -17,8 +15,6 @@ import numpy as np
 import math
 import sys
 
-""" I/O definitions """
-featfile = sys.argv[1] # input file
 
 # Load features
 feats = pd.read_csv(featfile)
@@ -147,6 +143,8 @@ def baseline():
                 sum(feats['editor_success']/len(feats)))))
 
 def main():
+    featfile = sys.argv[1] # input file
+    
     stats()
     evaluate()
     prediction()
