@@ -66,7 +66,7 @@ def evaluate(feats):
 """ Prediction """
 def prediction(feats):
 
-    print("CLASSIFYING")
+    print("CLASSIFICATION:")
 
     # Select columns
     ed_nonbow_cols = ['latin_cs', 'editor_prop_latin', 'editor_prop_switches', 
@@ -78,11 +78,15 @@ def prediction(feats):
     feats_v = {}
 
     # Get unigram features
-    v = TfidfVectorizer(min_df=1, stop_words='english') 
+    #v = TfidfVectorizer(min_df=1, stop_words='english') 
+    v = TfidfVectorizer(min_df=1) 
+    #v = CountVectorizer(min_df=1) 
     # don't think has Arabic stopwords
     edbow = v.fit_transform(feats['editor_talk'])
 
-    v_other = TfidfVectorizer(min_df=1, stop_words='english')
+    #v_other = TfidfVectorizer(min_df=1, stop_words='english')
+    v_other = TfidfVectorizer(min_df=1)
+    #v_other = CountVectorizer(min_df=1)
     other_bow = v_other.fit_transform(feats['other_talk'])
 
     # Get exclusive editor non-unigram features
@@ -114,27 +118,32 @@ def prediction(feats):
     feats_v.shape
 
     # Train and test classifiers
-    baseline()
-    train_test(edbow, 'editor unigrams')
-    train_test(ed_nonbow, 'editor CS')
-    train_test(edfeats, 'editor unigrams+CS')
-    train_test(bow_f, 'all unigrams')
-    train_test(nonbow_f, 'all CS')
-    train_test(feats_v, 'all unigrams+CS')
+    baseline(feats)
+    train_test(feats, edbow, 'editor unigrams')
+    train_test(feats, ed_nonbow, 'editor CS')
+    train_test(feats, edfeats, 'editor unigrams+CS')
+    train_test(feats, bow_f, 'all unigrams')
+    train_test(feats, nonbow_f, 'all CS')
+    train_test(feats, feats_v, 'all unigrams+CS')
 
 
-def train_test(train_data, desc):
+def train_test(feats, train_data, desc):
 
     """ Regression models """
 
     # Train and test logistic regression classifier
-    clf = LogisticRegression(class_weight='balanced')
-    #clf = LogisticRegression()
-    loo = LeaveOneOut().split(train_data)
-    scores = cross_val_score(clf, train_data, feats['editor_success'], cv=loo)
+    #clf = LogisticRegression(class_weight='balanced')
+    clf = LogisticRegression()
+    #loo = LeaveOneOut().split(train_data)
+    scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
     print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
-def baseline():
+    # Train and test linear regression classifier
+    clf = LinearRegression()
+    scores = cross_val_score(clf, train_data, feats['editor_score'], cv=10)
+    print("%s Accuracy: %0.3f" % (desc, scores.mean())) #TODO rmse
+
+def baseline(feats):
     print("Majority class guess {:0.3f} accuracy".format(
             max(1-sum(feats['editor_success'])/len(feats),
                 sum(feats['editor_success']/len(feats)))))
