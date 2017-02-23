@@ -123,10 +123,9 @@ def prediction(feats):
     train_test(feats_v, 'all unigrams+CS')
 
 
-# # Logistic regression
-# ## Leave-one-out CV
-
 def train_test(train_data, desc):
+
+    """ Regression models """
 
     # Train and test logistic regression classifier
     clf = LogisticRegression(class_weight='balanced')

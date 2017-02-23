@@ -4,7 +4,6 @@ from string import ascii_letters, punctuation
 letters = ascii_letters + punctuation
 from collections import Counter, defaultdict
 import re, hashlib, os, sys
-#from pandas.tseries.offsets import *
 import numpy as np
 import math
 
@@ -80,14 +79,14 @@ def get_latin(text):
 
 
 """ extraction functions """
-def extract_technical():
+def extract_technical(feats):
     ed_crit = [0.0 if not a and b else a for a,b in zip(feats['editor_talk'].map(en_technical), feats['en_cs'].tolist())]
     other_crit = [0.0 if not a and b else a for a,b in zip(feats['other_talk'].map(en_technical), feats['other_en_cs'].tolist())]
 
     feats['editor_en_technical'] = ed_crit
     feats['other_en_technical'] = other_crit
 
-def extract_quotes():
+def extract_quotes(feats):
     """ Two quote marks and presence of Latin words """
     ed_crit = [a and b for a,b in zip(feats['editor_talk'].map(two_quotes), feats['latin_cs'].tolist())]
     other_crit = [a and b for a,b in zip(feats['other_talk'].map(two_quotes), feats['other_latin_cs'].tolist())]
@@ -95,21 +94,21 @@ def extract_quotes():
     feats['editor_two_quotes'] = ed_crit
     feats['other_two_quotes'] = other_crit
 
-def extract_prop_latin_switches():
+def extract_prop_latin_switches(feats):
     """ Proportion of switches between Latin and non-Latin words """
     ed_crit = feats['editor_talk'].map(prop_switches)
     other_crit = feats['other_talk'].map(prop_switches)
     feats['editor_prop_switches'] = ed_crit
     feats['other_prop_switches'] = other_crit
 
-def extract_prop_english():
+def extract_prop_english(feats):
     crit = feats['editor_talk'].map(prop_english)
     feats['editor_prop_en'] = crit
     crit = feats['other_talk'].map(prop_english)
     feats['other_prop_en'] = crit
 
 # TODO: Put in lang identification
-def extract_has_english():
+def extract_has_english(feats):
     # Posts with code-switching
     crit = feats['editor_talk'].map(has_english)
     feats['en_cs'] = crit
@@ -118,7 +117,7 @@ def extract_has_english():
     print("Number of posts with English: {0} / {1}".format(sum(crit), len(feats)))
     print("Number of other posts with English: {0} / {1}".format(sum(crit), len(feats)))
 
-def extract_has_latin():
+def extract_has_latin(feats):
     # Posts with code-switching
     feats['latin_cs'] = feats['editor_talk'].map(has_latin)
     feats['other_latin_cs'] = feats['other_talk'].map(has_latin)
@@ -127,13 +126,13 @@ def extract_has_latin():
     print("Number of other posts with Latin: {0} / {1}".format(
             sum(feats['other_latin_cs']), len(feats)))
 
-def extract_prop_latin():
+def extract_prop_latin(feats):
     crit = feats['editor_talk'].map(prop_latin)
     feats['editor_prop_latin'] = crit
     crit = feats['other_talk'].map(prop_latin)
     feats['other_prop_latin'] = crit
 
-def get_editor_success():
+def get_editor_success(feats):
     feats['editor_success'] = feats['editor_score'].map(lambda x: x > 0.5)
 
 def extract_features(featfile, outfile):
@@ -141,14 +140,14 @@ def extract_features(featfile, outfile):
 
     feats = pd.read_csv(featfile)
     print("Extracting Latin features...")
-    extract_has_latin()
-    extract_prop_latin()
-    extract_prop_latin_switches()
+    extract_has_latin(feats)
+    extract_prop_latin(feats)
+    extract_prop_latin_switches(feats)
 
     print("Extracting quote features...")
-    extract_quotes()
+    extract_quotes(feats)
     #extract_technical()
-    get_editor_success()
+    get_editor_success(feats)
     feats.to_csv(outfile, index=False)
     print("Wrote features to {0}".format(outfile))
 
