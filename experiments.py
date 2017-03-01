@@ -8,7 +8,8 @@ from sklearn.metrics import cohen_kappa_score, make_scorer
 from sklearn import svm
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.model_selection import train_test_split, LeaveOneOut, cross_val_score
+from sklearn.model_selection import train_test_split, LeaveOneOut, cross_val_score, cross_val_predict
+from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_rel, ttest_ind, pearsonr
 from scipy.sparse import hstack
 import numpy as np
@@ -16,9 +17,8 @@ import math
 import sys
 
 
-
-""" Dataset stats """
 def stats(feats):
+    """ Dataset stats """
 
     print("Number of posts with Latin: {0} / {1}".format(sum(feats['latin_cs']), len(feats)))
     #print("Number of posts with English: {0} / {1}".format(sum(feats['en_cs']), len(feats)))
@@ -66,7 +66,7 @@ def evaluate(feats):
 """ Prediction """
 def prediction(feats):
 
-    print("CLASSIFICATION:")
+    print("CLASSIFICATION/REGRESSION:")
 
     # Select columns
     ed_nonbow_cols = ['latin_cs', 'editor_prop_latin', 'editor_prop_switches', 
@@ -118,7 +118,6 @@ def prediction(feats):
     feats_v.shape
 
     # Train and test classifiers
-    baseline(feats)
     train_test(feats, edbow, 'editor unigrams')
     train_test(feats, ed_nonbow, 'editor CS')
     train_test(feats, edfeats, 'editor unigrams+CS')
@@ -129,24 +128,29 @@ def prediction(feats):
 
 def train_test(feats, train_data, desc):
 
-    """ Regression models """
+    # Baseline for classification
+    #baseline(feats)
 
     # Train and test logistic regression classifier
-    #clf = LogisticRegression(class_weight='balanced')
-    clf = LogisticRegression()
-    #loo = LeaveOneOut().split(train_data)
-    scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
-    print("%s Accuracy: %0.3f" % (desc, scores.mean()))
+    ##clf = LogisticRegression(class_weight='balanced')
+    #clf = LogisticRegression()
+    ##loo = LeaveOneOut().split(train_data)
+    #scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
+    #print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
     # Train and test linear regression classifier
     clf = LinearRegression()
-    scores = cross_val_score(clf, train_data, feats['editor_score'], cv=10)
-    print("%s Accuracy: %0.3f" % (desc, scores.mean())) #TODO rmse
+    pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
+    scores = mean_squared_error(feats['editor_score'], pred)
+    print("%s MSE: %0.3f" % (desc, scores.mean()))
+
 
 def baseline(feats):
+    # right now just for classification
     print("Majority class guess {:0.3f} accuracy".format(
             max(1-sum(feats['editor_success'])/len(feats),
                 sum(feats['editor_success']/len(feats)))))
+
 
 def main():
     featfile = sys.argv[1] # input file
