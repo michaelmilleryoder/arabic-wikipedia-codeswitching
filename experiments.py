@@ -8,7 +8,9 @@ from sklearn.metrics import cohen_kappa_score, make_scorer
 from sklearn import svm
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.model_selection import train_test_split, LeaveOneOut, cross_val_score, cross_val_predict
+from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_rel, ttest_ind, pearsonr
 from scipy.sparse import hstack
@@ -103,6 +105,7 @@ def prediction(feats):
     nonbow = np.hstack(nonbow_d.values())
     #print(nonbow.shape)
 
+    # FINAL FEATURE STRUCTURES
     # Assemble editor features
     edfeats = hstack([edbow, ed_nonbow])
 
@@ -116,6 +119,9 @@ def prediction(feats):
     # Assemble all features
     feats_v = hstack([edbow, other_bow, ed_nonbow, nonbow])
     feats_v.shape
+
+    # Feature selection
+    # nonbow = SelectPercentile(chi2, 
 
     # Train and test classifiers
     train_test(feats, edbow, 'editor unigrams')
@@ -139,10 +145,15 @@ def train_test(feats, train_data, desc):
     #print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
     # Train and test linear regression classifier
-    clf = LinearRegression()
-    pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
-    scores = mean_squared_error(feats['editor_score'], pred)
-    print("%s MSE: %0.3f" % (desc, scores.mean()))
+    #clf = LinearRegression()
+    #pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
+    #scores = mean_squared_error(feats['editor_score'], pred)
+    #print("%s MSE: %0.3f" % (desc, scores.mean()))
+
+    # Train and test svm classifier
+    clf = svm.SVC()
+    scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
+    print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
 
 def baseline(feats):
