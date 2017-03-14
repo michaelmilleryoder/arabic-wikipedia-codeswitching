@@ -17,6 +17,14 @@ from scipy.sparse import hstack
 import numpy as np
 import math
 import sys
+import pdb
+
+"""
+If run by itself, takes a command-line argument with the name of a feature file
+(for example cs_talk_features.csv).
+
+Prints experiment results.
+"""
 
 
 def stats(feats):
@@ -125,11 +133,17 @@ def prediction(feats):
 
     # Train and test classifiers
     train_test(feats, edbow, 'editor unigrams')
+    print_top_features(v.get_feature_names(), LinearRegression().fit(edbow, feats['editor_score']), n=100)  
+
     train_test(feats, ed_nonbow, 'editor CS')
+    print_top_features(ed_nonbow_cols, LinearRegression().fit(ed_nonbow, feats['editor_score']), n=len(ed_nonbow_cols))  
+
     train_test(feats, edfeats, 'editor unigrams+CS')
-    train_test(feats, bow_f, 'all unigrams')
-    train_test(feats, nonbow_f, 'all CS')
-    train_test(feats, feats_v, 'all unigrams+CS')
+    feat_names_ed = v.get_feature_names() + ed_nonbow_cols
+    print_top_features(feat_names_ed, LinearRegression().fit(edfeats, feats['editor_score']), n=100)  
+    #train_test(feats, bow_f, 'all unigrams')
+    #train_test(feats, nonbow_f, 'all CS')
+    #train_test(feats, feats_v, 'all unigrams+CS')
 
 
 def train_test(feats, train_data, desc):
@@ -138,22 +152,22 @@ def train_test(feats, train_data, desc):
     #baseline(feats)
 
     # Train and test logistic regression classifier
-    ##clf = LogisticRegression(class_weight='balanced')
+    #clf = LogisticRegression(class_weight='balanced')
     #clf = LogisticRegression()
     ##loo = LeaveOneOut().split(train_data)
     #scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
     #print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
     # Train and test linear regression classifier
-    #clf = LinearRegression()
-    #pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
-    #scores = mean_squared_error(feats['editor_score'], pred)
-    #print("%s MSE: %0.3f" % (desc, scores.mean()))
+    clf = LinearRegression()
+    pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
+    scores = mean_squared_error(feats['editor_score'], pred)
+    print("%s MSE: %0.3f" % (desc, scores.mean()))
 
-    # Train and test svm classifier
-    clf = svm.SVC()
-    scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
-    print("%s Accuracy: %0.3f" % (desc, scores.mean()))
+    # SVM classifier
+    #clf = svm.SVC()
+    #scores = cross_val_score(clf, train_data, feats['editor_success'], cv=10)
+    #print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
 
 def baseline(feats):
@@ -162,6 +176,11 @@ def baseline(feats):
             max(1-sum(feats['editor_success'])/len(feats),
                 sum(feats['editor_success']/len(feats)))))
 
+def print_top_features(feat_names, clf, n=20):
+    """ Prints features with the highest coefficient values """
+    top = np.argsort(clf.coef_)[-1*n:]
+    print(" ".join(reversed([feat_names[j] for j in top])))
+    print()
 
 def main():
     featfile = sys.argv[1] # input file
