@@ -21,19 +21,17 @@ Input:
 Output:
 * CSV with all article edits scored (edscores_path)
 * CSV with all talk page contributions in a conversation for an editor, 1 per 
-line, scored
+line, scored (outpath)
 
 """
 
 """ I/O vars """
 # input
-#n = 10000 # how many random contributions to include
 infile = '/home/michael/school/research/wp/ar/artalk_cspages_segmented.csv'
-#talkpath = '/home/michael/school/research/wp/ar/artalk.tsv'
 diff_dir = '/home/michael/school/research/wp/ar/ar_article_diffs/'
+ardict_path = '/home/michael/school/research/wp/ar/arabic-wordlist-1.6.txt'
 
 # output
-#rv_outpath = '/home/michael/school/research/wp/ar/revert_discussion.csv'
 edscores_path = '/home/michael/school/research/wp/ar/editor_thread_scores.csv'
 outpath = '/home/michael/school/research/wp/ar/cs_talk_scores.csv'
 
@@ -299,7 +297,6 @@ def score_editors():
 def build_out():
     """ Assemble editor scores with talk page discussion """
     art_data = pd.read_csv(edscores_path)
-    #talk = pd.read_csv(talkpath, delimiter='\t')
     talk = pd.read_csv(infile, parse_dates=['timestamp'])
 
     # Build input corpora of editors' text + others' text, get labels
@@ -312,16 +309,51 @@ def build_out():
     n_otherturns = {}
     othertalk = defaultdict(str)
 
+    # Filter out usernames from text
+    usernames = set(talk['username'].tolist())
+
+    # Check usernames against an English dictionary
+    endict = set(words.words())
+    #print("Username overlap with English dictionary: {:.1%}".format(
+            #len(usernames.intersection(endict))/len(usernames)))
+
+    # Check usernames against an Arabic dictionary
+    with open(ardict_path) as f:
+        ardict = set([w for w in f.read().splitlines()])
+    #print("Username overlap with Arabic dictionary: {:.1%}".format(
+    #        len(usernames.intersection(ardict))/len(usernames)))
+
+    # Filter out dict words from usernames
+    usernames = set([u for u in usernames if not u in ardict and not u in endict])
+
     print("Assembling editor and other text ...")
     for i, el in enumerate(tqdm(edthreads)):
         rows = talk[(talk['article_title']==el[0]) &
                         (talk['thread_title']==el[1])]
+
+        # Editor rows
         edrows = rows[rows['username']==el[2]]
-        edtalk[el] += ' '.join([str(t) for t in edrows['post_text'].tolist()])
+
+        # Screen out usernames        
+        screened = []
+        for t in edrows['post_text'].tolist():
+            new_t = ' '.join([w for w in str(t).split() if not w in usernames])
+            screened.append(new_t)
+        edtalk[el] = ' '.join(screened) # need +=?
+
         n_edturns[el] = len(edrows)
         
+        # Other text
         other_rows = rows[rows['username']!=el[2]]
-        othertalk[el] += ' '.join([str(t) for t in other_rows['post_text'].tolist()])
+
+        # Screen out usernames        
+        screened = []
+        for t in other_rows['post_text'].tolist():
+            new_t = ' '.join([w for w in str(t).split() if not w in usernames])
+            screened.append(new_t)
+
+        othertalk[el] = ' '.join(screened) # need +=?
+        #othertalk[el] = ' '.join([str(t) for t in other_rows['post_text'].tolist()])
         n_otherturns[el] = len(other_rows)
         
     # Build one relevant dataframe
@@ -336,8 +368,27 @@ def build_out():
     talk_scores.to_csv(outpath, index=False)
     print('Wrote thread info with editor scores to {:s}'.format(outpath))
 
+
+
 def main():
-    score_editors()
+
+    #talk = pd.read_csv(infile, parse_dates=['timestamp'])
+
+    ## Filter out usernames from text
+    #usernames = set(talk['username'].tolist())
+
+    ## Check usernames against an English dictionary
+    #endict = set(words.words())
+    #print("Username overlap with English dictionary: {:.1%}".format(
+    #        len(usernames.intersection(endict))/len(usernames)))
+
+    ## Check usernames against an Arabic dictionary
+    #with open(ardict_path) as f:
+    #    ardict = set([w for w in f.read().splitlines()])
+    #print("Username overlap with Arabic dictionary: {:.1%}".format(
+    #        len(usernames.intersection(ardict))/len(usernames)))
+
+    #score_editors()
     build_out()
 
 if __name__ == '__main__':
