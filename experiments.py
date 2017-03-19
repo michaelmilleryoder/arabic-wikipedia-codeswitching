@@ -183,7 +183,7 @@ def print_top_features(feat_names, clf, n=20):
     print()
 
 def main():
-    featfile = sys.argv[1] # input file
+    featfile = sys.argv[1] # input file, such as cs_talk_features.csv
     
     # Load features
     feats = pd.read_csv(featfile)

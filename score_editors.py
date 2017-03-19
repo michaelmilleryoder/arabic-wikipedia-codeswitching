@@ -337,7 +337,8 @@ def build_out():
         # Screen out usernames        
         screened = []
         for t in edrows['post_text'].tolist():
-            new_t = ' '.join([w for w in str(t).split() if not w in usernames])
+            new_t = ' '.join([w for w in str(t).split() if not w in usernames and not '--' in w]) 
+                # handle --username, doesn't handle multi-word usernames
             screened.append(new_t)
         edtalk[el] = ' '.join(screened) # need +=?
 
@@ -349,7 +350,7 @@ def build_out():
         # Screen out usernames        
         screened = []
         for t in other_rows['post_text'].tolist():
-            new_t = ' '.join([w for w in str(t).split() if not w in usernames])
+            new_t = ' '.join([w for w in str(t).split() if not w in usernames and not '--' in w])
             screened.append(new_t)
 
         othertalk[el] = ' '.join(screened) # need +=?

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import sys
 
-# # Filter full talk threads csv with scores
+# # Filter full talk threads csv by scores
 
 """ Functions """
 
@@ -32,6 +32,9 @@ def filter(cstalk_path, base_outpath, threshold=None):
             
     mask = [tup in lose_threads for tup in zip(data['article'], data['thread_title'])]
     lose_rows = data[mask]
+    len_mask = lose_rows['editor_talk'].map(lambda x: len(str(x).split()) > 0)
+        # must have editor text in the contribution
+    lose_rows = lose_rows[len_mask]
     print("Filtered #rows: {0}".format(len(lose_rows)))
     print("Filtered #threads: {0}".format(len(lose_threads)))
 
