@@ -1,0 +1,63 @@
+Number of posts with Latin: 916 / 5258
+#threads: 2103
+#editors: 917
+
+STATISTICAL ANALYSIS:
+latin_cs
+Number of positive feature example: 916
+Positive feature mean score: 0.635164
+Negative feature mean score: 0.590761
+Ttest_indResult(statistic=3.8802549281737182, pvalue=0.00010562382666213146)
+
+other_latin_cs
+Number of positive feature example: 1707
+Positive feature mean score: 0.589700
+Negative feature mean score: 0.602725
+Ttest_indResult(statistic=-1.4033439741095952, pvalue=0.16057336422791549)
+
+editor_two_quotes
+Number of positive feature example: 318
+Positive feature mean score: 0.642069
+Negative feature mean score: 0.595692
+Ttest_indResult(statistic=2.5449889905197094, pvalue=0.010956458636451635)
+
+other_two_quotes
+Number of positive feature example: 923
+Positive feature mean score: 0.575594
+Negative feature mean score: 0.603373
+Ttest_indResult(statistic=-2.4326780360876903, pvalue=0.01502076456268573)
+
+#editor_turns
+#nonzero: 5258
+r=-0.06437013148708612, p=2.992317194392476e-06
+
+#other_turns
+#nonzero: 5258
+r=-0.05992139651258688, p=1.3744829118276749e-05
+
+editor_prop_latin
+#nonzero: 1442
+r=0.04209967719042999, p=0.0022629240514784503
+
+other_prop_latin
+#nonzero: 2355
+r=0.03157700430911405, p=0.02203636782753535
+
+editor_prop_switches
+#nonzero: 1437
+r=0.06938508148374824, p=4.7503925697871994e-07
+
+other_prop_switches
+#nonzero: 2351
+r=0.018267542791120847, p=0.18536596347504958
+
+CLASSIFICATION/REGRESSION:
+editor unigrams MSE: 0.165
+ولادته وهراني تصحيح محمد فبراير سبتمبر غمدان أغسطس 2016 osa 2015 2013 سأقترح المقولة 2011 أبريل القطاعات 2014 2005 مصطفى الله شكرا الشكر nibrahim العربي الأسمر برلين مايو تطوير المفالة لوجهة وبإنتظار hamdy نعم مصدره بسمة صحة وسمت 2004 استرجاع مارس والخلاف سوري 87 1937م والمتعارف بوت عودة المرحلة الصياغة amper وأتفق yamanam 2010 نسسيم البهنسي اللازمة أؤيد إبداء توضع mrjoker07 غاني موهنداس marzook إخطارك المعاني شهرته التذكير إفسادها مسح nahal 14 عيب إلغاء السيد يمنتدى سأكمل عصر بحسب المهزله مساهمات مكان 2012 لنترجم الملائم صغيرة ستفعل 78 الرغم الصحيحة بشوندة غربية الدمج مساهماتك طبيعة 52 فـارس حافظ كسرى insan1411
+
+editor CS MSE: 0.099
+editor_prop_latin latin_cs editor_two_quotes editor_prop_switches
+
+editor unigrams+CS MSE: 0.164
+ولادته وهراني تصحيح محمد فبراير سبتمبر غمدان أغسطس 2016 2015 osa 2013 المقولة سأقترح 2011 أبريل القطاعات 2014 2005 مصطفى الله شكرا الشكر العربي برلين الأسمر nibrahim مايو تطوير المفالة لوجهة وبإنتظار مصدره نعم بسمة hamdy صحة وسمت استرجاع مارس 2004 والخلاف وأتفق سوري المرحلة 1937م بوت 87 والمتعارف عودة الصياغة yamanam البهنسي 2010 نسسيم اللازمة أؤيد توضع إخطارك المعاني شهرته إبداء mrjoker07 إفسادها التذكير إلغاء 14 موهنداس غاني مسح عيب سأكمل السيد يمنتدى amper بحسب عصر marzook المهزله مساهمات لنترجم الملائم 78 مكان 2012 صغيرة الصحيحة 16px ستفعل الدمج بشوندة ضروري الرغم طبيعة غربية حافظ insan1411 تفدنا مساهماتك يساهم
+
