@@ -12,7 +12,8 @@ from tqdm import tqdm
 import pdb
 
 """ This script scores editors based on the proportion of edits that last
-after a discussion ends
+after a discussion ends.
+It also preprocesses text to use.
 
 Input:
 * CSV with talk page contributions, 1 per line
@@ -327,6 +328,8 @@ def build_out():
     usernames = set([u for u in usernames if not u in ardict and not u in endict])
 
     print("Assembling editor and other text ...")
+
+    ts_re = compile_ts_re()
     for i, el in enumerate(tqdm(edthreads)):
         rows = talk[(talk['article_title']==el[0]) &
                         (talk['thread_title']==el[1])]
@@ -335,26 +338,16 @@ def build_out():
         edrows = rows[rows['username']==el[2]]
 
         # Screen out usernames        
-        screened = []
-        for t in edrows['post_text'].tolist():
-            new_t = ' '.join([w for w in str(t).split() if not w in usernames and not '--' in w]) 
-                # handle --username, doesn't handle multi-word usernames
-            screened.append(new_t)
+        screened = [preprocess(ts_re, usernames, t) for t in edrows['post_text'].tolist()]
         edtalk[el] = ' '.join(screened) # need +=?
-
         n_edturns[el] = len(edrows)
         
         # Other text
         other_rows = rows[rows['username']!=el[2]]
 
         # Screen out usernames        
-        screened = []
-        for t in other_rows['post_text'].tolist():
-            new_t = ' '.join([w for w in str(t).split() if not w in usernames and not '--' in w])
-            screened.append(new_t)
-
+        screened = [preprocess(ts_re, usernames, t) for t in other_rows['post_text'].tolist()]
         othertalk[el] = ' '.join(screened) # need +=?
-        #othertalk[el] = ' '.join([str(t) for t in other_rows['post_text'].tolist()])
         n_otherturns[el] = len(other_rows)
         
     # Build one relevant dataframe
@@ -366,10 +359,80 @@ def build_out():
         
     talk_scores = pd.DataFrame(outrows, columns=['article', 'thread_title', 'editor', 'editor_talk', 'other_talk',
                                   '#editor_turns', '#other_turns', 'editor_score'])
+
     talk_scores.to_csv(outpath, index=False)
     print('Wrote thread info with editor scores to {:s}'.format(outpath))
 
+def compile_ts_re():
+    numberref = "(?:[0-9](?:,|\.)?)+(?:x|k|m|st|nd|rd|th)?"
+    numberspace = re.compile("{0} ".format(numberref))
+    spacenumber = re.compile(" {0}".format(numberref))
+    underscores = re.compile("_")
 
+    # two options for datestring: 
+    #    xx:xx . yyy # . # . UTC .
+    #    xx:xx . # yyy # . UTC .
+    timeref = "[0-2]?[0-9]:[0-9][0-9]"
+    months = ['يناير', 'فبراير', 'مارس', 'أبريل',
+            'مايو', 'يونيو','يوليو','أغسطس',
+           'سبتمبر','أكتوبر','نوفمبر','ديسمبر']
+    #months = [  "January", "February",    "March",    "April",
+    #                "May",     "June",     "July",   "August",
+    #          "September",  "October", "November", "December"]
+    #getRef = lambda(month):"(?:{0}(?:\.|{1})?)".format(month[:3],month[3:]) if len(month)>3 \
+                      #else "(?:{0})".format(month)
+    monthref = "(?:{0})".format("|".join(months))
+    #UTCref = "(?:(?:(?:\(UTC\))|(?:\(UTC ?(?:\+|-)[0-1]?[0-9]\))|(?:UTC(?: ?(?:\+|-)[0-1]?[0-9]\)?)?)))"
+    UTCref = "\(UTC\)|\(ت ع م\)"
+    tsConfigs = ["(?:{0},? \. {1} {3} \. {3} \. {2} \.)",
+                 "(?:{0},? \. {3} {1} {3} \. {2} \.)",
+                 "(?:{3} {1} {3} {0} {2})",
+                 "(?:{0},? {3} {1} {3} {2})"]
+    timestamp = re.compile("(?:{0})".format("|".join([config.format(timeref, monthref, UTCref, numberref) 
+                                                  for config in tsConfigs])))
+    time = re.compile(" {0} ".format(timeref))
+    IPnumref = "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+    IPaddress = re.compile("(?:{0}\.){{3}}{0}".format(IPnumref))
+    ws = re.compile(r'\s+')
+
+    return timestamp, IPaddress, time, spacenumber, numberspace, ws
+
+def preprocess(regex, exclude, text):
+    """ Preprocess text to remove things like usernames.
+
+        Args:
+            regex: timestamp regular expressions, compiled
+            exclude: list of terms like usernames to exclude
+            text: string of text to preprocess
+        Returns:
+            preprocessed text
+
+    """
+
+    # Take out usernames
+    new_t = ' '.join([w for w in str(text).split() if not w in exclude and not '--' in w]) 
+
+    # Take out timestamps
+    timestamp, IPaddress, time, spacenumber, numberspace, ws = regex
+
+    #new_t = timestamp.sub("TIMESTAMP",new_t)
+    #new_t = IPaddress.sub("IPADDRESS",new_t)
+    #new_t = time.sub(" TIME ",new_t)
+    new_t = timestamp.sub(" ",new_t)
+    new_t = IPaddress.sub(" ",new_t)
+    new_t = time.sub(" ",new_t)
+    new_t = spacenumber.sub(" #",new_t)
+    new_t = numberspace.sub("# ",new_t)
+
+    #new_t = underscores.sub(" ",new_t)
+    
+    # Replace number with <NUMBER> token
+    #new_t = re.sub(r'\W\d+\W', '<NUMBER>', new_t)
+
+    # Collapse whitespace
+    new_t = ws.sub(' ', new_t)
+
+    return new_t
 
 def main():
 

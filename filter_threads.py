@@ -32,9 +32,16 @@ def filter(cstalk_path, base_outpath, threshold=None):
             
     mask = [tup in lose_threads for tup in zip(data['article'], data['thread_title'])]
     lose_rows = data[mask]
-    len_mask = lose_rows['editor_talk'].map(lambda x: len(str(x).split()) > 0)
+
+    #editor_len_mask = lose_rows['editor_talk'].map(lambda x: len(str(x).split()) > 0)
+    #other_len_mask = lose_rows['other_talk'].map(lambda x: len(str(x).split()) > 0)
+
+    editor_len_mask = lose_rows['editor_talk'].map(lambda x: isinstance(x, str))
+    other_len_mask = lose_rows['other_talk'].map(lambda x: isinstance(x, str))
+
         # must have editor text in the contribution
-    lose_rows = lose_rows[len_mask]
+    lose_rows = lose_rows[editor_len_mask]
+    lose_rows = lose_rows[other_len_mask]
     print("Filtered #rows: {0}".format(len(lose_rows)))
     print("Filtered #threads: {0}".format(len(lose_threads)))
 

@@ -52,7 +52,9 @@ def all_latin(word):
             and not word.startswith('http') \
             and word != '(UTC)' \
             and word != '\\n' \
-            and not 'TEMPLATE' in word:
+            and not 'TEMPLATE' in word \
+            and not 'IPADDRESS' in word \
+            and not 'TIME' in word:
         return True
     else:
         return False
@@ -66,8 +68,12 @@ def has_latin(text):
 
 # Proportion of words with all Latin characters
 def prop_latin(text):
-    n_wds = sum(all_latin(w) for w in str(text).split())
-    return n_wds/len(str(text).split())
+    if len(str(text).split()) == 0:
+        return 0.0
+
+    else:
+        n_wds = sum(all_latin(w) for w in str(text).split())
+        return n_wds/len(str(text).split())
 
 # Return words with Latin letters longer than 1 letter
 def get_latin(text):
