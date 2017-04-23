@@ -132,10 +132,10 @@ def prediction(feats):
     # nonbow = SelectPercentile(chi2, 
 
     # Train and test classifiers
-    train_test(feats, edbow, 'editor unigrams')
+    u_scores = train_test(feats, edbow, 'editor unigrams')
     print_top_features(v.get_feature_names(), LinearRegression().fit(edbow, feats['editor_score']), n=100)  
 
-    train_test(feats, ed_nonbow, 'editor CS')
+    cs_scores = train_test(feats, ed_nonbow, 'editor CS')
     print_top_features(ed_nonbow_cols, LinearRegression().fit(ed_nonbow, feats['editor_score']), n=len(ed_nonbow_cols))  
 
     train_test(feats, edfeats, 'editor unigrams+CS')
@@ -144,6 +144,10 @@ def prediction(feats):
     #train_test(feats, bow_f, 'all unigrams')
     #train_test(feats, nonbow_f, 'all CS')
     #train_test(feats, feats_v, 'all unigrams+CS')
+
+    # t-test for significance between unigrams and cs MSE
+    print('T-test between unigrams and cs: {}'.format(ttest_ind(u_scores, cs_scores)))
+    
 
 
 def train_test(feats, train_data, desc):
@@ -161,8 +165,12 @@ def train_test(feats, train_data, desc):
     # Train and test linear regression classifier
     clf = LinearRegression()
     pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
-    scores = mean_squared_error(feats['editor_score'], pred)
-    print("%s MSE: %0.3f" % (desc, scores.mean()))
+    pred = pred.clip(0,1) # clip between 0 and 1
+    mse = mean_squared_error(feats['editor_score'], pred)
+    print("%s MSE: %0.3f" % (desc, mse))
+
+    errors = (feats['editor_score'] - pred) ** 2
+    return errors # for significance testing
 
     # SVM classifier
     #clf = svm.SVC()

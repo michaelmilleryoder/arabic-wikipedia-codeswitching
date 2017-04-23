@@ -23,7 +23,6 @@ Output:
 * CSV with all article edits scored (edscores_path)
 * CSV with all talk page contributions in a conversation for an editor, 1 per 
 line, scored (outpath)
-
 """
 
 """ I/O vars """
@@ -364,7 +363,7 @@ def build_out():
     print('Wrote thread info with editor scores to {:s}'.format(outpath))
 
 def compile_ts_re():
-    numberref = "(?:[0-9](?:,|\.)?)+(?:x|k|m|st|nd|rd|th)?"
+    numberref = "(?:[0-9](?:,|\.|،)?)+(?:x|k|m|st|nd|rd|th)?"
     numberspace = re.compile("{0} ".format(numberref))
     spacenumber = re.compile(" {0}".format(numberref))
     underscores = re.compile("_")
@@ -394,8 +393,11 @@ def compile_ts_re():
     IPnumref = "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
     IPaddress = re.compile("(?:{0}\.){{3}}{0}".format(IPnumref))
     ws = re.compile(r'\s+')
+    utc = re.compile(UTCref)
+    template = re.compile(r'TEMPLATE\[.*?\]')
 
-    return timestamp, IPaddress, time, spacenumber, numberspace, ws
+    return timestamp, IPaddress, time, spacenumber, numberspace, ws, utc, \
+            template
 
 def preprocess(regex, exclude, text):
     """ Preprocess text to remove things like usernames.
@@ -413,7 +415,8 @@ def preprocess(regex, exclude, text):
     new_t = ' '.join([w for w in str(text).split() if not w in exclude and not '--' in w]) 
 
     # Take out timestamps
-    timestamp, IPaddress, time, spacenumber, numberspace, ws = regex
+    timestamp, IPaddress, time, spacenumber, \
+        numberspace, ws, utc, template = regex
 
     #new_t = timestamp.sub("TIMESTAMP",new_t)
     #new_t = IPaddress.sub("IPADDRESS",new_t)
@@ -423,6 +426,8 @@ def preprocess(regex, exclude, text):
     new_t = time.sub(" ",new_t)
     new_t = spacenumber.sub(" #",new_t)
     new_t = numberspace.sub("# ",new_t)
+    new_t = utc.sub(" ",new_t)
+    new_t = template.sub(" ",new_t)
 
     #new_t = underscores.sub(" ",new_t)
     
