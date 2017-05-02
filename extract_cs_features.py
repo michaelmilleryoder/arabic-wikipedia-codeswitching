@@ -59,6 +59,22 @@ def all_latin(word):
     else:
         return False
 
+def all_arabic(wd):
+    """ Returns true if all characters are Arabic in a word, else false """
+    if len(wd) <= 1:
+        return False
+
+    all_ar = False
+    for c in wd:
+        val = ord(c)
+        if not (val > int('0x600', 16) and val < int('0x6ff', 16)):
+            break
+        else:
+            all_ar = True
+    
+    return all_ar
+
+
 # See if a text has at least three words with Latin letters longer than 1 letter
 def has_latin(text):
     if sum(all_latin(w) for w in str(text).split()) > 2:
@@ -79,10 +95,18 @@ def prop_latin(text):
 def get_latin(text):
     latin_wds = [w for w in str(text).split() if all_latin(w)]
     if len(latin_wds) > 2:
-        return latin_wds
+        return ' '.join(latin_wds)
     else:
         return None
 
+def get_arabic(text):
+    """ Return words with Arabic letters longer than 1 letter """
+
+    arabic_wds = [w for w in str(text).split() if all_arabic(w)]
+    if len(arabic_wds) > 0:
+        return ' '.join(arabic_wds)
+    else:
+        return None
 
 """ extraction functions """
 def extract_technical(feats):
@@ -138,8 +162,15 @@ def extract_prop_latin(feats):
     crit = feats['other_talk'].map(prop_latin)
     feats['other_prop_latin'] = crit
 
+def extract_arabic_words(feats):
+    feats['editor_talk_arabic'] = feats['editor_talk'].map(get_arabic)
+
+def extract_latin_words(feats):
+    feats['editor_talk_latin'] = feats['editor_talk'].map(get_latin)
+
 def get_editor_success(feats):
     feats['editor_success'] = feats['editor_score'].map(lambda x: x > 0.5)
+
 
 def extract_features(featfile, outfile):
     """ Main extraction function """
@@ -149,6 +180,10 @@ def extract_features(featfile, outfile):
     extract_has_latin(feats)
     extract_prop_latin(feats)
     extract_prop_latin_switches(feats)
+    extract_latin_words(feats)
+
+    print("Extracting Arabic features ...")
+    extract_arabic_words(feats)
 
     print("Extracting quote features...")
     extract_quotes(feats)

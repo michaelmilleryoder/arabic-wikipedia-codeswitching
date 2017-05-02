@@ -8,7 +8,7 @@ from sklearn.metrics import cohen_kappa_score, make_scorer
 from sklearn import svm
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.feature_selection import SelectPercentile, chi2
+from sklearn.feature_selection import SelectPercentile, chi2, mutual_info_regression, f_regression
 from sklearn.model_selection import train_test_split, LeaveOneOut, cross_val_score, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
@@ -132,25 +132,25 @@ def prediction(feats):
     # nonbow = SelectPercentile(chi2, 
 
     # Train and test classifiers
-    u_scores = train_test(feats, edbow, 'editor unigrams')
-    print_top_features(v.get_feature_names(), LinearRegression().fit(edbow, feats['editor_score']), n=100)  
+    #u_scores = train_test(feats, edbow, 'editor unigrams')
+    #print_top_features(v.get_feature_names(), LinearRegression().fit(edbow, feats['editor_score']), n=100)  
 
-    cs_scores = train_test(feats, ed_nonbow, 'editor CS')
-    print_top_features(ed_nonbow_cols, LinearRegression().fit(ed_nonbow, feats['editor_score']), n=len(ed_nonbow_cols))  
+    #cs_scores = train_test(feats, ed_nonbow, 'editor CS')
+    #print_top_features(ed_nonbow_cols, LinearRegression().fit(ed_nonbow, feats['editor_score']), n=len(ed_nonbow_cols))  
 
-    train_test(feats, edfeats, 'editor unigrams+CS')
-    feat_names_ed = v.get_feature_names() + ed_nonbow_cols
-    print_top_features(feat_names_ed, LinearRegression().fit(edfeats, feats['editor_score']), n=100)  
-    #train_test(feats, bow_f, 'all unigrams')
-    #train_test(feats, nonbow_f, 'all CS')
-    #train_test(feats, feats_v, 'all unigrams+CS')
+    #train_test(feats, edfeats, 'editor unigrams+CS')
+    #feat_names_ed = v.get_feature_names() + ed_nonbow_cols
+    #print_top_features(feat_names_ed, LinearRegression().fit(edfeats, feats['editor_score']), n=100)  
+
+    # Try feature selection
+    train_test(feats, edfeats, 'editor unigrams+CS', feat_selection=True)
 
     # t-test for significance between unigrams and cs MSE
-    print('T-test between unigrams and cs: {}'.format(ttest_ind(u_scores, cs_scores)))
+    #print('T-test between unigrams and cs: {}'.format(ttest_ind(u_scores, cs_scores)))
     
 
 
-def train_test(feats, train_data, desc):
+def train_test(feats, train_data, desc, feat_selection=False):
 
     # Baseline for classification
     #baseline(feats)
@@ -163,8 +163,15 @@ def train_test(feats, train_data, desc):
     #print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
     # Train and test linear regression classifier
-    clf = LinearRegression()
-    pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
+    if feat_selection:
+        clf = make_pipeline(SelectPercentile(mutual_info_regression, percentile=20), LinearRegression())
+        #scores = cross_val_score(clf, train_data, feats['editor_score'], cv=10)
+        pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10, n_jobs=-1, verbose=50)
+
+    else:
+        clf = LinearRegression()
+        pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
+
     pred = pred.clip(0,1) # clip between 0 and 1
     mse = mean_squared_error(feats['editor_score'], pred)
     print("%s MSE: %0.3f" % (desc, mse))

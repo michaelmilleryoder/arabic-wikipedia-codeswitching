@@ -1,31 +1,31 @@
-Number of posts with Latin: 947 / 5259
+Number of posts with Latin: 786 / 5259
 #threads: 2103
 #editors: 917
 
 STATISTICAL ANALYSIS:
 latin_cs
-Number of positive feature example: 947
-Positive feature mean score: 0.630907
-Negative feature mean score: 0.591446
-Ttest_indResult(statistic=3.492937363553196, pvalue=0.00048167160227428977)
+Number of positive feature example: 786
+Positive feature mean score: 0.628725
+Negative feature mean score: 0.593249
+Ttest_indResult(statistic=2.9126089205547849, pvalue=0.0035993230110448874)
 
 other_latin_cs
-Number of positive feature example: 1762
-Positive feature mean score: 0.592462
-Negative feature mean score: 0.601620
-Ttest_indResult(statistic=-0.99464065743594499, pvalue=0.31995684463655127)
+Number of positive feature example: 1503
+Positive feature mean score: 0.596962
+Negative feature mean score: 0.599187
+Ttest_indResult(statistic=-0.23133412629801225, pvalue=0.81706423973747144)
 
 editor_two_quotes
-Number of positive feature example: 331
-Positive feature mean score: 0.635862
-Negative feature mean score: 0.596045
-Ttest_indResult(statistic=2.225941746189477, pvalue=0.026060320824371298)
+Number of positive feature example: 290
+Positive feature mean score: 0.637199
+Negative feature mean score: 0.596296
+Ttest_indResult(statistic=2.1492115519697843, pvalue=0.03166314695940977)
 
 other_two_quotes
-Number of positive feature example: 952
-Positive feature mean score: 0.578345
-Negative feature mean score: 0.603018
-Ttest_indResult(statistic=-2.1868910450888936, pvalue=0.028794398902960223)
+Number of positive feature example: 824
+Positive feature mean score: 0.578942
+Negative feature mean score: 0.602195
+Ttest_indResult(statistic=-1.9455395117031169, pvalue=0.051763311364226024)
 
 #editor_turns
 #nonzero: 5259
@@ -36,28 +36,29 @@ r=-0.0643938159287683, p=2.9609038897541214e-06
 r=-0.05908535082493558, p=1.8066621025507196e-05
 
 editor_prop_latin
-#nonzero: 1527
-r=0.0412659022166202, p=0.0027613757828815412
+#nonzero: 1236
+r=0.034506461901532275, p=0.012331154558995729
 
 other_prop_latin
-#nonzero: 2460
-r=0.03520710826144341, p=0.010668682998528075
+#nonzero: 2126
+r=0.03408539231312858, p=0.013437155785814591
 
 editor_prop_switches
-#nonzero: 1519
-r=0.07174749079559427, p=1.9034259563452573e-07
+#nonzero: 1228
+r=0.058481833610936375, p=2.1989764235554197e-05
 
 other_prop_switches
-#nonzero: 2456
-r=0.026247534593175848, p=0.05699888065927943
+#nonzero: 2122
+r=0.02571307649797317, p=0.06224441715815053
 
 CLASSIFICATION/REGRESSION:
-editor unigrams MSE: 16.725
-12 مع أخي شنيع نسسيم 31 تمصير 25 56 osa وهراني الموضوعي عودة ولادته تصحيح 03 أجده صحة 39 غربية إخطارك 30 أتمنى 54 yamanam عيب المرحلة 59 09 نعم 10 forbidden مساهمات المفالة تقصد 41 بلال واضحا 07 mrjoker07 taher2000 55 57 05 02 27 الإقتراح 21 انك تراجع team قطعا اللازمة الأسمر ابريل كهيرب لوجهة ولاء مبتدئ علم أظن كن الرد سلمت فنقول بليون مواصفات كلاي إبداء المهزله 16px لهذه باستخدام تخريم خلاصة punching سأقترح أين القطاعات أشكركم سأكمل 06 44 يترك the لجهدك الجمع تحويل يمنتدى الألقاب 00 08 يداك لبوابة المطبعي غمدان ونستبدلها مساهماتك أحد 32
+editor unigrams MSE: 0.126
+أخي نسسيم أتمنى تقصد مصدره إبداء القوالب وهراني المهزله لك المطبعي شنيع غمدان nibrahim عودة عيب الأسمر تمت osa المفالة مريم صغيرة اللازمة ككل وقف مترجم المرحلة ضروري توضع ليست الموثوقية nباختصار أصحاب المعاني المسيء يتكلم الشكر البهنسي النبي الرغم الضروري المباراة يترك تغليب باستخدام بروديوسر المقولة التعريف عــمــرو بليون كيف salman تعديلك العوامية كلامك مشكلة الموسوعية برلين المبطنة بإلغاء نيوتن حدود حياته تطويرها هشام لاهتمامك الزياني نزيل عجلون أظن فذلك فريد الجميع الرقم كفاية تحول قطعا مواضيع التصفية الصحيحة سلطنة تحويل كـ الدمج إلغاء مسح الترجمة تطوير بإمكانك تفدنا الحرارة نعم بحسب ستجد اقوم بيروت أحد المهندس حملة ظهرت
 
 editor CS MSE: 0.099
-editor_prop_latin editor_two_quotes latin_cs editor_prop_switches
+editor_prop_switches editor_two_quotes editor_prop_latin latin_cs
 
-editor unigrams+CS MSE: 16.700
-12 مع أخي شنيع نسسيم 31 تمصير 56 وهراني الموضوعي عودة osa ولادته تصحيح أجده 03 إخطارك صحة 39 غربية المرحلة 30 أتمنى 54 09 editor_prop_latin عيب 59 10 41 نعم مساهمات المفالة 25 taher2000 بلال 07 واضحا 27 57 الإقتراح 05 21 55 تراجع yamanam ابريل mrjoker07 قطعا 16px مبتدئ تقصد اللازمة كهيرب الأسمر انك 02 لوجهة الرد سلمت كن أظن بليون خلاصة المهزله كلاي لهذه تخريم ولاء فنقول أين سأقترح مواصفات سأكمل القطاعات علم punching باستخدام أشكركم 06 تحويل يداك 44 يترك إبداء الألقاب غمدان يمنتدى 00 08 لجهدك 32 رائف كلامك ونستبدلها ماكاهوي المطبعي يشير الجمع نيوتن
+editor unigrams+CS MSE: 0.126
+أخي نسسيم أتمنى تقصد editor_prop_switches مصدره القوالب وهراني إبداء المهزله المطبعي لك شنيع غمدان عودة الأسمر تمت عيب المفالة صغيرة مريم ضروري المرحلة الموثوقية اللازمة توضع ليست ككل of وقف أصحاب nباختصار المعاني مترجم الشكر يتكلم تغليب البهنسي المسيء الضروري يترك النبي الرغم المباراة المقولة بليون نيوتن nibrahim عــمــرو تعديلك العوامية بروديوسر التعريف الموسوعية المبطنة فريد بإلغاء عجلون تحول برلين كلامك باستخدام كيف is قطعا تطويرها لاهتمامك الجميع الزياني حدود بإمكانك نزيل فذلك مشكلة الرقم حياته الدمج for مواضيع التصفية حيادا اقوم بحسب تفدنا المائة الحرارة إلغاء كفاية سلطنة مكتوبة الصحيحة المهندس كـ ستجد that بيروت أظن دوري أحد أعماله
 
+T-test between unigrams and cs: Ttest_indResult(statistic=10.763349909390627, pvalue=7.0763090595583335e-27)
