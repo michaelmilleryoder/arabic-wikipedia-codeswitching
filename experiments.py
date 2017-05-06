@@ -8,12 +8,13 @@ from sklearn.metrics import cohen_kappa_score, make_scorer
 from sklearn import svm
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.feature_selection import SelectPercentile, chi2, mutual_info_regression, f_regression
+from sklearn.feature_selection import SelectPercentile, SelectKBest, chi2, mutual_info_regression, f_regression
 from sklearn.model_selection import train_test_split, LeaveOneOut, cross_val_score, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_rel, ttest_ind, pearsonr
 from scipy.sparse import hstack
+from tqdm import tqdm
 import numpy as np
 import math
 import sys
@@ -64,6 +65,10 @@ def evaluate(feats):
         print(ttest_ind(fpresent['editor_score'], nof['editor_score']))
         print()
 
+        # Save distributions
+        np.save('{}_present.npy'.format(f), fpresent['editor_score'].values)
+        np.save('{}_notpresent.npy'.format(f), nof['editor_score'].values)
+
     # Continuous features (measure correlation)
     for f in continuous_feats:
         print(f)
@@ -84,6 +89,7 @@ def prediction(feats):
     other_nonbow_cols = ['other_latin_cs', 'other_prop_latin', 
             'other_prop_switches', 'other_two_quotes']
 
+    print("Vectorizing features ...")
     # Vectorize input features
     feats_v = {}
 
@@ -99,6 +105,14 @@ def prediction(feats):
     #v_other = CountVectorizer(min_df=1)
     other_bow = v_other.fit_transform(feats['other_talk'])
 
+    # Get editor Arabic unigram features
+    #feats['editor_talk_arabic'].fillna('', inplace=True)
+    #ed_arbow = v.fit_transform(feats['editor_talk_arabic'])
+
+    ## Get editor Latin unigram features
+    #feats['editor_talk_latin'].fillna('', inplace=True)
+    #ed_latbow = v.fit_transform(feats['editor_talk_latin'])
+
     # Get exclusive editor non-unigram features
     ed_nonbow_d = {}
     for col in ed_nonbow_cols:
@@ -111,9 +125,7 @@ def prediction(feats):
         nonbow_d[col] = np.array([feats[col]]).T
     #     nonbow_d[col] = np.array([(v - min(feats[col]))/max(feats[col]) for v in feats[col].values]).T
     nonbow = np.hstack(nonbow_d.values())
-    #print(nonbow.shape)
 
-    # FINAL FEATURE STRUCTURES
     # Assemble editor features
     edfeats = hstack([edbow, ed_nonbow])
 
@@ -122,35 +134,70 @@ def prediction(feats):
 
     # Assemble unigram features
     bow_f = hstack([edbow, other_bow])
-    #print(bow_f.shape)
+
+    # Assemble Latin unigram features and CS
+    #cs_latbow = hstack([ed_latbow, ed_nonbow])
 
     # Assemble all features
     feats_v = hstack([edbow, other_bow, ed_nonbow, nonbow])
-    feats_v.shape
-
-    # Feature selection
-    # nonbow = SelectPercentile(chi2, 
 
     # Train and test classifiers
+    print("Training and testing classifiers ...")
     #u_scores = train_test(feats, edbow, 'editor unigrams')
     #print_top_features(v.get_feature_names(), LinearRegression().fit(edbow, feats['editor_score']), n=100)  
 
-    #cs_scores = train_test(feats, ed_nonbow, 'editor CS')
+    scores = {}
     #print_top_features(ed_nonbow_cols, LinearRegression().fit(ed_nonbow, feats['editor_score']), n=len(ed_nonbow_cols))  
 
     #train_test(feats, edfeats, 'editor unigrams+CS')
-    #feat_names_ed = v.get_feature_names() + ed_nonbow_cols
+    feat_names_ed = v.get_feature_names() + ed_nonbow_cols
     #print_top_features(feat_names_ed, LinearRegression().fit(edfeats, feats['editor_score']), n=100)  
 
-    # Try feature selection
-    train_test(feats, edfeats, 'editor unigrams+CS', feat_selection=True)
+    # Train and test with different feature sets
+    clf_type = LinearRegression()
+    #clf_type = svm.SVR()
+    feat_nums = [10]
+    featset_list = {}
 
-    # t-test for significance between unigrams and cs MSE
-    #print('T-test between unigrams and cs: {}'.format(ttest_ind(u_scores, cs_scores)))
+    # Feature sets that require feature selection
+    featset_list['featsel'] = [
+        #(edbow, 'editor unigrams'),
+        #(edfeats, 'editor unigrams+CS'),
+        #(bow_f, 'editor+other unigrams'),
+        #(feats_v, 'editor+other unigrams+CS')
+        ] 
+
+    for p in feat_nums:
+        tqdm.write("\n******{} FEATURES******".format(p))
+        for featset, desc in tqdm(featset_list['featsel']):
+            scores[desc] = train_test(feats, featset, desc, initial_clf=clf_type, feat_selection='kbest', num_feats=p, save=True)
+
+            # t-test for significance between unigrams and cs MSE
+            if desc != 'editor unigrams':
+                tqdm.write('T-test between unigrams and {}: {}'.format(desc, ttest_ind(scores['editor unigrams'], scores[desc])))
+
+    # Feature sets that don't require feature selection
+    featset_list['no_featsel'] = [
+        #(cs_latbow, 'editor Latin unigrams+CS')
+        #(ed_nonbow, 'editor CS'),
+        #(nonbow_f, 'editor+other CS')        
+        ]
+
+    for featset, desc in featset_list['no_featsel']:
+        scores[desc] = train_test(feats, featset, desc, save=True)
+        tqdm.write('T-test between unigrams and {}: {}\n'.format(desc, ttest_ind(scores['editor unigrams'], scores[desc])))
+
+    # Print most informative features for unigrams
+    num_feats = feat_nums[0]
+    print("\nMost informative {} unigrams features...".format(num_feats))
+    print_top_features_selected(edbow, v.get_feature_names(), num_feats, feats['editor_score'], clf_type, n=min(num_feats,20))
+
+    # Print most informative features for unigrams+CS
+    #print("\nMost informative {} unigrams+CS features...".format(num_feats))
+    #print_top_features_selected(edfeats, feat_names_ed, num_feats, feats['editor_score'], clf_type, n=20)
     
 
-
-def train_test(feats, train_data, desc, feat_selection=False):
+def train_test(feats, train_data, desc, initial_clf=LinearRegression(), feat_selection=None, num_feats=1, print_top_features=None, featnames=None, save=False):
 
     # Baseline for classification
     #baseline(feats)
@@ -163,20 +210,33 @@ def train_test(feats, train_data, desc, feat_selection=False):
     #print("%s Accuracy: %0.3f" % (desc, scores.mean()))
 
     # Train and test linear regression classifier
-    if feat_selection:
-        clf = make_pipeline(SelectPercentile(mutual_info_regression, percentile=20), LinearRegression())
-        #scores = cross_val_score(clf, train_data, feats['editor_score'], cv=10)
-        pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10, n_jobs=-1, verbose=50)
+    clf = initial_clf # overwritten if feature selection
 
-    else:
-        clf = LinearRegression()
-        pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
+    if feat_selection:
+
+        if feat_selection == 'percentile':
+            selector = SelectPercentile(mutual_info_regression, percentile=num_feats)
+        elif feat_selection == 'kbest':
+            selector = SelectKBest(mutual_info_regression, k=num_feats)
+        else: 
+            print("Only percentile or kbest feature selection allowed")
+            return
+
+        clf = make_pipeline(selector, initial_clf)
+
+    pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10, n_jobs=-1)
+    #pred = cross_val_predict(clf, train_data, feats['editor_score'], cv=10)
 
     pred = pred.clip(0,1) # clip between 0 and 1
-    mse = mean_squared_error(feats['editor_score'], pred)
-    print("%s MSE: %0.3f" % (desc, mse))
+    rmse = math.sqrt(mean_squared_error(feats['editor_score'], pred))
+    print("%s RMSE: %0.3f" % (desc, rmse))
 
-    errors = (feats['editor_score'] - pred) ** 2
+    if save:
+        with open("{}.csv".format(desc.replace(' ', '_').lower()), 'w') as f:
+            for p in pred:
+                f.write("{:f}\n".format(p))
+
+    errors = np.sqrt((feats['editor_score'] - pred) ** 2)
     return errors # for significance testing
 
     # SVM classifier
@@ -190,6 +250,15 @@ def baseline(feats):
     print("Majority class guess {:0.3f} accuracy".format(
             max(1-sum(feats['editor_success'])/len(feats),
                 sum(feats['editor_success']/len(feats)))))
+
+def print_top_features_selected(featset, total_featnames, num_feats_selected, y, clf, n=20):
+    """ Prints features with the highest coefficient values,
+        with feature selection """
+    selector = SelectKBest(mutual_info_regression, k=num_feats_selected).fit(featset, y)
+    #feat_scores = selector.scores_
+    X_new = selector.transform(featset)
+    featnames = [tup[0] for tup in zip(total_featnames, selector.get_support()) if all(tup)]
+    print_top_features(featnames, clf.fit(X_new, y), n=n)
 
 def print_top_features(feat_names, clf, n=20):
     """ Prints features with the highest coefficient values """

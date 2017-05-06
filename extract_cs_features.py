@@ -9,14 +9,13 @@ import math
 
 
 """ utility fns """
-# TODO: Make more meaningful
-def en_technical(text):
-#     if not has_english(text): return 0.0
-    en_wds = [w for w in str(text).split() if len(w) > 1 and w.lower() in endict and w != 'TEMPLATE']
-    if len(en_wds) == 0:
+def latin_named_entities(text):
+    """ Returns the proportion of entities in Latin characters in a text"""
+    lat_wds = get_latin(text).split()
+    if len(lat_wds) == 0:
         return 0.0
-    caps = sum(1 for w in en_wds if w[0].isupper())
-    return caps/len(en_wds)
+    caps = sum(1 for w in lat_wds if w[0].isupper())
+    return caps/len(lat_wds)
 
 # ## quoting
 # Must also have code-switching
@@ -109,12 +108,12 @@ def get_arabic(text):
         return None
 
 """ extraction functions """
-def extract_technical(feats):
-    ed_crit = [0.0 if not a and b else a for a,b in zip(feats['editor_talk'].map(en_technical), feats['en_cs'].tolist())]
-    other_crit = [0.0 if not a and b else a for a,b in zip(feats['other_talk'].map(en_technical), feats['other_en_cs'].tolist())]
+def extract_named_entities(feats):
+    ed_crit = [0.0 if not a and b else a for a,b in zip(feats['editor_talk'].map(latin_named_entities), feats['en_cs'].tolist())]
+    other_crit = [0.0 if not a and b else a for a,b in zip(feats['other_talk'].map(latin_named_entities), feats['other_en_cs'].tolist())]
 
-    feats['editor_en_technical'] = ed_crit
-    feats['other_en_technical'] = other_crit
+    feats['editor_latin_named_entities'] = ed_crit
+    feats['other_latin_named_entities'] = other_crit
 
 def extract_quotes(feats):
     """ Two quote marks and presence of Latin words """
@@ -187,7 +186,7 @@ def extract_features(featfile, outfile):
 
     print("Extracting quote features...")
     extract_quotes(feats)
-    #extract_technical()
+    extract_named_entities()
     get_editor_success(feats)
     feats.to_csv(outfile, index=False)
     print("Wrote features to {0}".format(outfile))
