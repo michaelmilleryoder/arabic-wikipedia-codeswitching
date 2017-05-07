@@ -46,16 +46,17 @@ def evaluate(feats):
 
     print("STATISTICAL ANALYSIS:")
 
-    binary_feats = ['latin_cs', 'other_latin_cs', 'editor_two_quotes',
-                    'other_two_quotes']
+    langprop_feats = [col for col in feats.columns if re.match(r'\w\w_prop', col)]
+    langbin_feats = [col for col in feats.columns if re.match(r'\w\w_cs', col)]
 
-    lang_feats = [col for col in feats.columns if re.match(r'\w\w_prop', col)]
+    binary_feats = ['latin_cs', 'other_latin_cs', 'editor_two_quotes',
+                    'other_two_quotes'] + langbin_feats
 
     continuous_feats = ['#editor_turns', '#other_turns', 
                         'editor_prop_latin', 'other_prop_latin',
                         'editor_prop_switches', 'other_prop_switches',
                         'editor_latin_named_entities', 'other_latin_named_entities',
-                        ] + lang_feats
+                        ] + langprop_feats
 
     # ## Variation among cs features
     # Discrete features--t test
@@ -88,12 +89,14 @@ def prediction(feats):
     print("CLASSIFICATION/REGRESSION:")
 
     # Select columns
-    lang_feats = [col for col in feats.columns if re.match(r'\w\w_prop', col)]
+    langprop_feats = [col for col in feats.columns if re.match(r'\w\w_prop', col)]
+    langbin_feats = [col for col in feats.columns if re.match(r'\w\w_cs', col)]
 
     ed_nonbow_cols = ['latin_cs', 'editor_prop_latin', 'editor_prop_switches', 
             'editor_two_quotes',
-            'editor_latin_named_entities']
-        #+ lang_feats
+            'editor_latin_named_entities'] \
+        + langbin_feats
+        #+ langprop_feats \
 
     other_nonbow_cols = ['other_latin_cs', 'other_prop_latin', 
             'other_prop_switches', 'other_two_quotes',
