@@ -10,11 +10,11 @@ import math
 
 """ utility fns """
 def latin_named_entities(text):
-    """ Returns the proportion of entities in Latin characters in a text"""
-    lat_wds = get_latin(text).split()
-    if len(lat_wds) == 0:
+    """ Returns the proportion of words in Latin characters in a text that are capitalized"""
+    lat_wds = get_latin(text)
+    if not lat_wds or len(lat_wds) == 0:
         return 0.0
-    caps = sum(1 for w in lat_wds if w[0].isupper())
+    caps = sum(1 for w in lat_wds.split() if w[0].isupper())
     return caps/len(lat_wds)
 
 # ## quoting
@@ -74,6 +74,26 @@ def all_arabic(wd):
     return all_ar
 
 
+def non_arabic(wd):
+    """ Returns true if word is non-Arabic, non-punctuation """
+    punc_ctr = 0
+
+    # if has an Arabic letter or punctuation mark
+    for c in wd:
+        if c in ['/', '#', '|']: # control for urls
+            return False
+        val = ord(c)
+        if val > int('0x600', 16) and val < int('0x6ff', 16): # has Arabic
+            return False
+        if c in punctuation:
+            punc_ctr += 1
+            
+    if punc_ctr == len(wd):
+        return False
+
+    return True
+
+
 # See if a text has at least three words with Latin letters longer than 1 letter
 def has_latin(text):
     if sum(all_latin(w) for w in str(text).split()) > 2:
@@ -107,10 +127,38 @@ def get_arabic(text):
     else:
         return None
 
+def get_non_arabic(text):
+    """ Returns spans of non-Arabic unigrams, pipe-separated """
+
+    prev_wd_nonar = False
+    out = []
+    intermediate = []
+
+    for w in str(text).split():
+        if non_arabic(w):
+            intermediate.append(w)
+            prev_wd_nonar = True
+            
+        else:
+            if prev_wd_nonar:
+                out.append(' '.join(intermediate))
+                intermediate = []
+            prev_wd_nonar = False
+
+    if len(intermediate) > 0:
+        out.append(' '.join(intermediate))
+        
+    if len(out) > 0:
+        outstr = ' | '.join(out)
+        return outstr
+    else:
+        return None
+
+
 """ extraction functions """
 def extract_named_entities(feats):
-    ed_crit = [0.0 if not a and b else a for a,b in zip(feats['editor_talk'].map(latin_named_entities), feats['en_cs'].tolist())]
-    other_crit = [0.0 if not a and b else a for a,b in zip(feats['other_talk'].map(latin_named_entities), feats['other_en_cs'].tolist())]
+    ed_crit = [0.0 if not a and b else a for a,b in zip(feats['editor_talk'].map(latin_named_entities), feats['latin_cs'].tolist())]
+    other_crit = [0.0 if not a and b else a for a,b in zip(feats['other_talk'].map(latin_named_entities), feats['other_latin_cs'].tolist())]
 
     feats['editor_latin_named_entities'] = ed_crit
     feats['other_latin_named_entities'] = other_crit
@@ -164,6 +212,9 @@ def extract_prop_latin(feats):
 def extract_arabic_words(feats):
     feats['editor_talk_arabic'] = feats['editor_talk'].map(get_arabic)
 
+def extract_non_arabic_words(feats):
+    feats['editor_talk_non_arabic'] = feats['editor_talk'].map(get_non_arabic)
+
 def extract_latin_words(feats):
     feats['editor_talk_latin'] = feats['editor_talk'].map(get_latin)
 
@@ -183,10 +234,11 @@ def extract_features(featfile, outfile):
 
     print("Extracting Arabic features ...")
     extract_arabic_words(feats)
+    extract_non_arabic_words(feats)
 
     print("Extracting quote features...")
     extract_quotes(feats)
-    extract_named_entities()
+    extract_named_entities(feats)
     get_editor_success(feats)
     feats.to_csv(outfile, index=False)
     print("Wrote features to {0}".format(outfile))

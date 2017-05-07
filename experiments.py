@@ -48,10 +48,14 @@ def evaluate(feats):
 
     binary_feats = ['latin_cs', 'other_latin_cs', 'editor_two_quotes',
                     'other_two_quotes']
+
+    lang_feats = [col for col in feats.columns if re.match(r'\w\w_prop', col)]
+
     continuous_feats = ['#editor_turns', '#other_turns', 
                         'editor_prop_latin', 'other_prop_latin',
-                        'editor_prop_switches', 'other_prop_switches',]
-                        #'editor_en_technical', 'other_en_technical']
+                        'editor_prop_switches', 'other_prop_switches',
+                        'editor_latin_named_entities', 'other_latin_named_entities',
+                        ] + lang_feats
 
     # ## Variation among cs features
     # Discrete features--t test
@@ -84,10 +88,16 @@ def prediction(feats):
     print("CLASSIFICATION/REGRESSION:")
 
     # Select columns
+    lang_feats = [col for col in feats.columns if re.match(r'\w\w_prop', col)]
+
     ed_nonbow_cols = ['latin_cs', 'editor_prop_latin', 'editor_prop_switches', 
-            'editor_two_quotes']
+            'editor_two_quotes',
+            'editor_latin_named_entities']
+        #+ lang_feats
+
     other_nonbow_cols = ['other_latin_cs', 'other_prop_latin', 
-            'other_prop_switches', 'other_two_quotes']
+            'other_prop_switches', 'other_two_quotes',
+            'other_latin_named_entities']
 
     print("Vectorizing features ...")
     # Vectorize input features
@@ -179,18 +189,18 @@ def prediction(feats):
     # Feature sets that don't require feature selection
     featset_list['no_featsel'] = [
         #(cs_latbow, 'editor Latin unigrams+CS')
-        #(ed_nonbow, 'editor CS'),
-        #(nonbow_f, 'editor+other CS')        
+        (ed_nonbow, 'editor CS'),
+        (nonbow_f, 'editor+other CS')        
         ]
 
     for featset, desc in featset_list['no_featsel']:
         scores[desc] = train_test(feats, featset, desc, save=True)
-        tqdm.write('T-test between unigrams and {}: {}\n'.format(desc, ttest_ind(scores['editor unigrams'], scores[desc])))
+        #tqdm.write('T-test between unigrams and {}: {}\n'.format(desc, ttest_ind(scores['editor unigrams'], scores[desc])))
 
     # Print most informative features for unigrams
-    num_feats = feat_nums[0]
-    print("\nMost informative {} unigrams features...".format(num_feats))
-    print_top_features_selected(edbow, v.get_feature_names(), num_feats, feats['editor_score'], clf_type, n=min(num_feats,20))
+    #num_feats = feat_nums[0]
+    #print("\nMost informative {} unigrams features...".format(num_feats))
+    #print_top_features_selected(edbow, v.get_feature_names(), num_feats, feats['editor_score'], clf_type, n=min(num_feats,20))
 
     # Print most informative features for unigrams+CS
     #print("\nMost informative {} unigrams+CS features...".format(num_feats))
