@@ -2,8 +2,6 @@
 
 Scripts for Arabic Wikipedia code-switching as a social variable predicting influence.
 
-Found locally at kati:/home/michael/school/research/wp/ar/scripts
-
 ## Pipeline order
 * `score_editors.py`
 * `filter_threads.py`
